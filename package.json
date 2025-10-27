@@ -4,8 +4,8 @@
   "main": "api/generate.js",
   "type": "module",
   "dependencies": {
-    "puppeteer-core": "^21.3.8",
-    "@sparticuz/chromium": "^117.0.1"
+    "puppeteer-core": "^22.6.4",
+    "@sparticuz/chromium": "^119.0.2"
   },
   "engines": {
     "node": "22.x"
