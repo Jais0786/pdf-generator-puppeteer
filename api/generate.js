@@ -11,16 +11,24 @@ export default async function handler(req, res) {
     });
 
     const page = await browser.newPage();
-    await page.setContent("<h1>Hello from Vercel PDF Generator!</h1>");
 
-    const pdfBuffer = await page.pdf({ format: "A4" });
+    // For testing start simple content — later we will set your real HTML templates
+    await page.setContent("<!doctype><html><body><h1>Hello from Vercel PDF generator</h1></body></html>", {
+      waitUntil: "networkidle0"
+    });
+
+    const pdfBuffer = await page.pdf({
+      format: "letter",
+      printBackground: true,
+      margin: { top: "0.6in", right: "0.6in", bottom: "0.6in", left: "0.6in" }
+    });
 
     await browser.close();
 
     res.setHeader("Content-Type", "application/pdf");
     res.send(pdfBuffer);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error generating PDF: " + error.message);
+  } catch (err) {
+    console.error("PDF generation error:", err);
+    res.status(500).send("PDF generation failed: " + err.message);
   }
 }
