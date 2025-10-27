@@ -3,6 +3,7 @@ import puppeteer from "puppeteer-core";
 
 export default async function handler(req, res) {
   try {
+    // Create browser instance
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
@@ -12,23 +13,27 @@ export default async function handler(req, res) {
 
     const page = await browser.newPage();
 
-    // For testing start simple content — later we will set your real HTML templates
-    await page.setContent("<!doctype><html><body><h1>Hello from Vercel PDF generator</h1></body></html>", {
-      waitUntil: "networkidle0"
-    });
+    // Use test HTML or provided query HTML
+    const html = req.query.html || `
+      <html>
+        <body style="font-family:Arial;padding:2rem">
+          <h1 style="color:#2E3A59;">PDF Generator Test</h1>
+          <p>This page confirms that Puppeteer + Vercel serverless works correctly.</p>
+        </body>
+      </html>
+    `;
 
-    const pdfBuffer = await page.pdf({
-      format: "letter",
-      printBackground: true,
-      margin: { top: "0.6in", right: "0.6in", bottom: "0.6in", left: "0.6in" }
-    });
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
 
     await browser.close();
 
+    // Send the PDF file
     res.setHeader("Content-Type", "application/pdf");
-    res.send(pdfBuffer);
-  } catch (err) {
-    console.error("PDF generation error:", err);
-    res.status(500).send("PDF generation failed: " + err.message);
+    res.setHeader("Content-Disposition", "inline; filename=test.pdf");
+    res.end(pdfBuffer);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 }
