@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDF Generator — Test</title>
+  <style>
+    :root{
+      --navy:#0f2b3a;
+      --muted:#6b7280;
+      --accent:#e6f0fb;
+      --card:#ffffff;
+      --shadow:0 6px 18px rgba(15,43,58,0.08);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{background:#f3f7fb;margin:0;padding:32px;display:flex;justify-content:center;}
+    .wrap{width:760px;max-width:96%;background:var(--card);box-shadow:var(--shadow);padding:28px;border-radius:10px;}
+    h1{margin:0 0 8px;color:var(--navy);font-size:20px;}
+    p.lead{margin:0 0 18px;color:var(--muted);font-size:14px;}
+    .controls{display:flex;gap:12px;align-items:center;margin:18px 0;}
+    button{background:#0b5cff;color:#fff;border:0;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;}
+    .status{color:var(--muted);font-size:13px;}
+    iframe#preview{width:100%;height:720px;border:1px solid #e6edf7;border-radius:6px;margin-top:18px}
+    .small{font-size:12px;color:var(--muted);margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main">
+    <h1>PDF generator — Test page</h1>
+    <p class="lead">Press Generate PDF to call <code>/api/generate</code>. The function should return a PDF (base64) which we display in the iframe below.</p>
+
+    <label>
+      Story title
+      <input id="title" type="text" value="Sam and the Jam" style="width:100%;margin-top:6px;padding:8px;border-radius:6px;border:1px solid #e6edf7"/>
+    </label>
+
+    <div class="controls">
+      <button id="go">Generate PDF</button>
+      <div class="status" id="status">Ready — will call <strong>/api/generate</strong></div>
+    </div>
+
+    <div class="small">If the generated PDF preview is blank, open the browser console (DevTools) and check network/API response for errors.</div>
+
+    <iframe id="preview" title="PDF preview"></iframe>
+  </div>
+
+  <script>
+    const btn = document.getElementById('go');
+    const status = document.getElementById('status');
+    const preview = document.getElementById('preview');
+
+    btn.addEventListener('click', async () => {
+      status.textContent = 'Calling API…';
+      btn.disabled = true;
+
+      // build a simple payload your api/generate.js should accept
+      const payload = {
+        title: document.getElementById('title').value || 'Untitled',
+        story: [
+          "Sam is a man.",
+          "Sam has jam in a pan.",
+          "The jam is on a mat.",
+          "A rat is in the jam!",
+          "Sam taps the pan."
+        ]
+      };
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          status.textContent = 'Error: ' + res.status + ' — ' + (txt || res.statusText);
+          btn.disabled = false;
+          return;
+        }
+
+        // assume the function returns application/pdf binary
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        preview.src = url;
+        status.textContent = 'Success — PDF loaded below';
+      } catch (err) {
+        status.textContent = 'Fetch error: ' + err.message;
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
